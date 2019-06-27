@@ -9,26 +9,19 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/maemual/go-cache"
-
 	"github.com/joho/godotenv"
+	"github.com/maemual/go-cache"
 )
 
-var number int
-
 func handler(w http.ResponseWriter, r *http.Request) {
-	err := godotenv.Load("cfg.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	cacheSizeStr := os.Getenv("СACHE_SIZE")
-	cacheSize, err := strconv.Atoi(cacheSizeStr)
+	cacheSize, err := strconv.Atoi(os.Getenv("СACHE_SIZE"))
 	lru, err := cache.NewLRU(cacheSize)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	url := os.Getenv("URL")
 	page, found := lru.Get(url)
+
 	if !found {
 		response, err := http.Get(url)
 		if err != nil {
@@ -40,16 +33,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		responseString := string(responseData)
+		//Add автоматически удалаяет при повышении лимита кэша
 		lru.Add(url, responseString)
 		page, found = lru.Get(url)
 	}
 	fmt.Fprint(w, page)
-
 }
+
 func main() {
+	err := godotenv.Load("cfg.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	http.HandleFunc("/", handler)
-	port := os.Getenv("PORT")
-	fmt.Printf("Port: %s\n", port)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }
