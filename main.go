@@ -1,5 +1,4 @@
-// proxy.go
-package proxy
+package main
 
 import (
 	"fmt"
@@ -42,7 +41,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, page)
 }
 
-func proxy() {
+func main() {
 	err := godotenv.Load("cfg.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
